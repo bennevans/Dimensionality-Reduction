@@ -121,7 +121,7 @@ def linear_pca():
     # red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=100000, batch_size=4, lr=5e-7, step_size=50, gamma=0.995, momentum=0.3) # 0.0456
 
     # Adam
-    red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=20000, batch_size=4, lr=1e-3, step_size=500, gamma=0.9) # 0.0445 better already
+    # red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=20000, batch_size=4, lr=1e-3, step_size=500, gamma=0.9) # 0.0445 better already
 
 
     red.construct(data, print_interval=100)
@@ -147,7 +147,7 @@ def non_linear_pca():
     data = np.stack([xs,ys], axis=1)
     # data = np.random.multivariate_normal(np.zeros(2), np.array([[1,1],[1,0]]), size=(n)).astype(np.float32)
 
-    red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=5000, batch_size=4, lr=1.0, step_size=100, gamma=1.0)
+    red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=10000, batch_size=64, lr=1e-4, step_size=1000, gamma=0.5, momentum=0.4)
     red.construct(data, print_interval=250)
 
     red_data = red.reduce_dim(data)
@@ -158,5 +158,5 @@ def non_linear_pca():
 
     print(red.model)
 if __name__ == '__main__':
-    # non_linear_pca()
-    linear_pca()
+    non_linear_pca()
+    # linear_pca()
