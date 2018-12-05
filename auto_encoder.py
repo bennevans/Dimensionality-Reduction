@@ -14,7 +14,8 @@ class AutoEncoder(DimensionReducer):
     def __init__(self, d, d_prime, sizes,
         non_linearity, device=torch.device('cpu'), 
         batch_size=32, lr=1e-4, gamma=1.0,
-        step_size=1000, iterations=5000):
+        step_size=1000, iterations=5000,
+        momentum=0.9, adam=True):
         super(AutoEncoder, self).__init__(d, d_prime)
 
         self.device = device
@@ -47,7 +48,10 @@ class AutoEncoder(DimensionReducer):
         self.decoder = nn.Sequential(*decoder_modules)
         self.model = nn.Sequential(self.encoder, self.decoder)
 
-        self.optim = torch.optim.SGD(self.model.parameters(), lr=lr)
+        if adam:
+            self.optim = torch.optim.Adam(self.model.parameters(), lr=lr)
+        else:
+            self.optim = torch.optim.SGD(self.model.parameters(), lr = lr, momentum=momentum)
         self.sched = torch.optim.lr_scheduler.StepLR(self.optim, self.step_size, self.gamma)
 
     def construct(self, data, print_interval=500, return_info=True):
@@ -84,7 +88,8 @@ class AutoEncoder(DimensionReducer):
     def reduce_dim(self, data):
         return self.encoder(torch.from_numpy(data)).cpu().detach().numpy()
 
-seed = 0xBEEF
+# seed = 0xBEEF
+seed = 0xBEED
 np.random.seed(seed)
 torch.manual_seed(seed)
 import matplotlib.pyplot as plt
@@ -96,13 +101,32 @@ def linear_pca():
     sizes = [(d, d_prime)]
     non_linearity = Identity
 
+    # was just curious if non-liner nn would train easier. for some reason it does!
+    # sizes = [(d, 4), (4,4), (4, d_prime)]
+    # non_linearity = nn.Sigmoid
+
     data = np.array([[1,1],[-1,-1],[-0.2, 0.2], [0.2,-0.2]]).astype(np.float32)
     # data = np.random.multivariate_normal(np.zeros(2), np.array([[1,1],[1,0]]), size=(n)).astype(np.float32)
 
-    red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=10000, batch_size=4, lr=2e-3, step_size=10, gamma=0.99)
+    # params for SGD
+    # red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=10000, batch_size=4, lr=2e-3, step_size=10, gamma=0.99) # without momentum good params
+    # red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=10000, batch_size=4, lr=1e-6, step_size=10, gamma=0.995) # pretty good with momentum
+    # red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=50000, batch_size=4, lr=1e-6, step_size=20, gamma=0.995, momentum=0.6) # 0.0665
+    # red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=50000, batch_size=4, lr=5e-7, step_size=50, gamma=0.995, momentum=0.3) # 0.052
+    # red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=100000, batch_size=4, lr=5e-7, step_size=50, gamma=0.995, momentum=0.3) # 0.0456
+
+    # Adam
+    red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=20000, batch_size=4, lr=1e-3, step_size=500, gamma=0.9) # 0.0445 better already
+
     red.construct(data, print_interval=100)
     
+    xs = data[:,0]
+    ys = data[:,1]
     red_data = red.reduce_dim(data)
+    plt.scatter(xs, red_data)
+    plt.scatter(xs, ys)
+    plt.show()
+
     print(list(red.model.parameters()))
 
 def non_linear_pca():
@@ -128,4 +152,5 @@ def non_linear_pca():
 
     print(red.model)
 if __name__ == '__main__':
-    non_linear_pca()
+    # non_linear_pca()
+    linear_pca()
