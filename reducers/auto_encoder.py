@@ -93,6 +93,9 @@ class AutoEncoder(DimensionReducer):
     def reduce_dim(self, data):
         return self.encoder(torch.from_numpy(data)).cpu().detach().numpy()
 
+from experiments.pairwise_distance import *
+import matplotlib.pyplot as plt
+
 # seed = 0xBEEF
 seed = 0xBEED
 np.random.seed(seed)
@@ -147,13 +150,22 @@ def non_linear_pca():
     data = np.stack([xs,ys], axis=1)
     # data = np.random.multivariate_normal(np.zeros(2), np.array([[1,1],[1,0]]), size=(n)).astype(np.float32)
 
-    red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=10000, batch_size=64, lr=1e-4, step_size=1000, gamma=0.5, momentum=0.4)
+    red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=10000, batch_size=4, lr=1e-4, step_size=1000, gamma=0.5, momentum=0.4)
     red.construct(data, print_interval=250)
 
     red_data = red.reduce_dim(data)
     print(xs.shape, red_data.shape)
     plt.scatter(xs, red_data)
     plt.scatter(xs, ys)
+    plt.show()
+
+    pairwise_distances, pairwise_distances_reduced = create_pairwise_distances(data, red_data)
+    average_absolute_epsilon = average_absolute_epsilon_from_pairwise_distances(pairwise_distances, pairwise_distances_reduced)
+    print('average_absolute_epsilon', average_absolute_epsilon)
+    eps = get_epsilons(pairwise_distances, pairwise_distances_reduced)
+    print('std_dev', np.std(eps))
+    print('mean', np.mean(eps))
+    plt.hist(eps)
     plt.show()
 
     print(red.model)
