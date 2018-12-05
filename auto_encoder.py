@@ -15,7 +15,7 @@ class AutoEncoder(DimensionReducer):
         non_linearity, device=torch.device('cpu'), 
         batch_size=32, lr=1e-4, gamma=1.0,
         step_size=1000, iterations=5000,
-        momentum=0.9, adam=True):
+        momentum=0.9, optimizer='adam'):
         super(AutoEncoder, self).__init__(d, d_prime)
 
         self.device = device
@@ -48,10 +48,13 @@ class AutoEncoder(DimensionReducer):
         self.decoder = nn.Sequential(*decoder_modules)
         self.model = nn.Sequential(self.encoder, self.decoder)
 
-        if adam:
+        if optimizer == 'adam':
             self.optim = torch.optim.Adam(self.model.parameters(), lr=lr)
-        else:
+        elif optimizer == 'sgd':
             self.optim = torch.optim.SGD(self.model.parameters(), lr = lr, momentum=momentum)
+        else:
+            raise NotImplementedError('bad optimizer type: {}'.format(optimizer))
+
         self.sched = torch.optim.lr_scheduler.StepLR(self.optim, self.step_size, self.gamma)
 
     def construct(self, data, print_interval=500, return_info=True):
@@ -60,12 +63,14 @@ class AutoEncoder(DimensionReducer):
         n = data.shape[0]
         for i in range(self.iterations):
             self.sched.step()
+            self.optim.zero_grad()
             batch_idx = np.random.choice(n, self.batch_size, replace=False)
             batch = torch.from_numpy(data[batch_idx]).to(self.device)
 
             predicted = self.model(batch)
             loss = F.mse_loss(predicted, batch)
             loss.backward()
+
             self.optim.step()
 
             if print_interval is not None and i % print_interval == 0:
@@ -118,6 +123,7 @@ def linear_pca():
     # Adam
     red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=20000, batch_size=4, lr=1e-3, step_size=500, gamma=0.9) # 0.0445 better already
 
+
     red.construct(data, print_interval=100)
     
     xs = data[:,0]
@@ -141,7 +147,7 @@ def non_linear_pca():
     data = np.stack([xs,ys], axis=1)
     # data = np.random.multivariate_normal(np.zeros(2), np.array([[1,1],[1,0]]), size=(n)).astype(np.float32)
 
-    red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=5000, batch_size=4, lr=1e-6, step_size=100, gamma=0.95)
+    red = AutoEncoder(d, d_prime, sizes, non_linearity, iterations=5000, batch_size=4, lr=1.0, step_size=100, gamma=1.0)
     red.construct(data, print_interval=250)
 
     red_data = red.reduce_dim(data)
