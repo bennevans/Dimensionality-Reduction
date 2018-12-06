@@ -23,29 +23,24 @@ class FastJohnsonLindenstrauss(DimensionReducer):
         pass
         # self.random_matrix = torch.from_numpy(np.load(dir)).to(self.device)
 
-    def fast_hadamard_transform_single(self, x):
+    def fast_hadamard_transform(self, x):
+        n = x.shape[0]
         add_dim = self.new_dim - self.d
-        x_power_2 = np.concatenate([x, np.zeros((add_dim))])
-        bit = length = len(x_power_2)
+        x_power_2 = np.concatenate([x, np.zeros((n,add_dim))], axis=1)
+        bit = length = self.new_dim
         result = x_power_2.copy()
+
         for _ in range(int(np.log2(length))):
             bit >>= 1
             for i in range(length):
                 if i & bit == 0:
                     j = i | bit
-                    temp = result[i]
-                    result[i] += result[j]
-                    result[j] = temp - result[j]
+                    temp = result[:, i].copy()
+                    result[:, i] += result[:, j]
+                    result[:,j] = temp - result[:,j]
+
         ret = result / np.sqrt(self.new_dim)
         return ret
-
-    def fast_hadamard_transform(self, x):
-        n = x.shape[0]
-        d = x.shape[1]
-        res = np.empty((n, self.new_dim))
-        for i in range(x.shape[0]):
-            res[i] = self.fast_hadamard_transform_single(x[i])
-        return res
 
     def reduce_dim(self, x):
         for i in range(self.num_repeats):
@@ -77,5 +72,5 @@ if __name__ == '__main__':
     eps = get_epsilons(pairwise_distances, pairwise_distances_reduced)
     print('std_dev', np.std(eps))
     print('mean', np.mean(eps))
-    # plt.hist(eps)
-    # plt.show()
+    plt.hist(eps)
+    plt.show()
