@@ -1,5 +1,5 @@
 
-from dim_reduction import DimensionReducer
+from reducers.dim_reduction import DimensionReducer
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

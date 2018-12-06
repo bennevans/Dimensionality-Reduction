@@ -1,0 +1,76 @@
+dataset_name gaussian_features d 10000 time 1544062682.5103948
+    d_prime 8000
+    construct time: 6.287477016448975 reduce_time: 2.8331758975982666
+    d_prime 4000
+    construct time: 0.5796859264373779 reduce_time: 1.3675460815429688
+    d_prime 2000
+    construct time: 0.25330209732055664 reduce_time: 0.6962900161743164
+    d_prime 1000
+    construct time: 0.18166017532348633 reduce_time: 0.35775279998779297
+    d_prime 500
+    construct time: 0.09431791305541992 reduce_time: 0.2061753273010254
+    d_prime 250
+    construct time: 0.0473787784576416 reduce_time: 0.10768485069274902
+    d_prime 100
+    construct time: 0.01675271987915039 reduce_time: 0.048322439193725586
+    d_prime 50
+    construct time: 0.008453845977783203 reduce_time: 0.023761987686157227
+    d_prime 10
+    construct time: 0.0019087791442871094 reduce_time: 0.01095271110534668
+dataset_name multimodal_features d 15000 time 1544062695.6990619
+    d_prime 10000
+    construct time: 1.7968964576721191 reduce_time: 5.140124559402466
+    d_prime 8000
+    construct time: 1.4249036312103271 reduce_time: 4.27369236946106
+    d_prime 4000
+    construct time: 0.7218272686004639 reduce_time: 2.9525985717773438
+    d_prime 2000
+    construct time: 0.3823738098144531 reduce_time: 1.308150053024292
+    d_prime 500
+    construct time: 0.12134981155395508 reduce_time: 0.2923893928527832
+    d_prime 250
+    construct time: 0.06825518608093262 reduce_time: 0.14284253120422363
+    d_prime 100
+    construct time: 0.02493143081665039 reduce_time: 0.05827665328979492
+    d_prime 50
+    construct time: 0.01264810562133789 reduce_time: 0.03671693801879883
+    d_prime 10
+    construct time: 0.0030515193939208984 reduce_time: 0.024616718292236328
+dataset_name sparse_features d 20000 time 1544062714.6730435
+    d_prime 16000
+    construct time: 3.9533958435058594 reduce_time: 55.51183295249939
+    d_prime 8000
+    construct time: 1.7103338241577148 reduce_time: 35.01918172836304
+    d_prime 4000
+    construct time: 0.843881368637085 reduce_time: 15.235316276550293
+    d_prime 2000
+    construct time: 0.4252347946166992 reduce_time: 7.577130317687988
+    d_prime 1000
+    construct time: 0.2242586612701416 reduce_time: 3.48750638961792
+    d_prime 500
+    construct time: 0.1577155590057373 reduce_time: 1.8217284679412842
+    d_prime 250
+    construct time: 0.0750889778137207 reduce_time: 1.0278029441833496
+    d_prime 100
+    construct time: 0.020651578903198242 reduce_time: 0.45702052116394043
+    d_prime 50
+    construct time: 0.01664900779724121 reduce_time: 0.35657262802124023
+    d_prime 10
+    construct time: 0.006719350814819336 reduce_time: 0.2349255084991455
+dataset_name ham_features d 2352 time 1544062936.190535
+    d_prime 2000
+    construct time: 0.3845021724700928 reduce_time: 0.10088181495666504
+    d_prime 1500
+    construct time: 0.044472694396972656 reduce_time: 0.06325101852416992
+    d_prime 1000
+    construct time: 0.04836583137512207 reduce_time: 0.04495048522949219
+    d_prime 500
+    construct time: 0.019846677780151367 reduce_time: 0.024742603302001953
+    d_prime 250
+    construct time: 0.010012149810791016 reduce_time: 0.01379847526550293
+    d_prime 100
+    construct time: 0.004096269607543945 reduce_time: 0.0056629180908203125
+    d_prime 50
+    construct time: 0.0021789073944091797 reduce_time: 0.0035262107849121094
+    d_prime 10
+    construct time: 0.0005407333374023438 reduce_time: 0.0025589466094970703
