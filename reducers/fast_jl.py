@@ -23,30 +23,50 @@ class FastJohnsonLindenstrauss(DimensionReducer):
         pass
         # self.random_matrix = torch.from_numpy(np.load(dir)).to(self.device)
 
-    def fast_hadamard_transform(self, x):
+    # def fast_hadamard_transform(self, x):
+    #     n = x.shape[0]
+    #     add_dim = self.new_dim - self.d
+    #     x_power_2 = np.concatenate([x, np.zeros((n,add_dim))], axis=1)
+    #     bit = length = self.new_dim
+    #     print('x_power_2', x_power_2.shape, x_power_2.dtype)
+    #     result = x_power_2.copy()
+
+    #     for _ in range(int(np.log2(length))):
+    #         bit >>= 1
+    #         for i in range(length):
+    #             if i & bit == 0:
+    #                 j = i | bit
+    #                 temp = result[:, i].copy()
+    #                 result[:, i] += result[:, j]
+    #                 result[:,j] = temp - result[:,j]
+
+    #     result /= np.sqrt(self.new_dim)
+    #     return result
+
+    def fast_hadamard_transform_pytorch(self, x, device=torch.device('cuda')):
         n = x.shape[0]
         add_dim = self.new_dim - self.d
         x_power_2 = np.concatenate([x, np.zeros((n,add_dim))], axis=1)
         bit = length = self.new_dim
-        result = x_power_2.copy()
+        result = torch.tensor(x_power_2.copy().astype(np.float32)).to(device)
 
         for _ in range(int(np.log2(length))):
             bit >>= 1
             for i in range(length):
                 if i & bit == 0:
                     j = i | bit
-                    temp = result[:, i].copy()
+                    temp = result[:, i].clone()
                     result[:, i] += result[:, j]
                     result[:,j] = temp - result[:,j]
 
-        ret = result / np.sqrt(self.new_dim)
-        return ret
+        result /= np.sqrt(self.new_dim)
+        return result.cpu().numpy()
 
     def reduce_dim(self, x):
         for i in range(self.num_repeats):
             D = np.expand_dims(self.Ds[i], axis=0)
             rand_signed = x * D
-            x = self.fast_hadamard_transform(rand_signed)
+            x = self.fast_hadamard_transform_pytorch(rand_signed)
         return x[:, self.subsampling_indices] * np.sqrt(self.new_dim / self.d_prime)
 
 
