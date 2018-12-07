@@ -39,14 +39,10 @@ class AutoEncoder(DimensionReducer):
             decoder_modules.append(non_linearity())
         encoder_modules[-1] = Identity()
         decoder_modules[-1] = Identity()
-
-        print('modules')
-        print(encoder_modules)
-        print(decoder_modules)
         
         self.encoder = nn.Sequential(*encoder_modules)
         self.decoder = nn.Sequential(*decoder_modules)
-        self.model = nn.Sequential(self.encoder, self.decoder)
+        self.model = nn.Sequential(self.encoder, self.decoder).to(device)
 
         if optimizer == 'adam':
             self.optim = torch.optim.Adam(self.model.parameters(), lr=lr)
@@ -57,10 +53,11 @@ class AutoEncoder(DimensionReducer):
 
         self.sched = torch.optim.lr_scheduler.StepLR(self.optim, self.step_size, self.gamma)
 
-    def construct(self, data, print_interval=500, return_info=True):
+    def construct(self, data, print_interval=None, return_info=True):
         self.model.train()
         assert data.shape[1] == self.d
         n = data.shape[0]
+
         for i in range(self.iterations):
             self.sched.step()
             self.optim.zero_grad()
@@ -87,11 +84,13 @@ class AutoEncoder(DimensionReducer):
             predicted = self.model(batch)
             total_error += F.mse_loss(predicted, batch, reduction='sum').item()
         
-        print('total_error', total_error)
-        print('avg_error', total_error / n)
+        # print('total_error', total_error)
+        # print('avg_error', total_error / n)
+        if return_info:
+            return total_error / n
 
     def reduce_dim(self, data):
-        return self.encoder(torch.from_numpy(data)).cpu().detach().numpy()
+        return self.encoder(torch.from_numpy(data).to(self.device)).cpu().detach().numpy()
 
 from experiments.pairwise_distance import *
 import matplotlib.pyplot as plt
