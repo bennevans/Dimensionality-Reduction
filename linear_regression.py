@@ -62,7 +62,8 @@ def main():
     data_dim = dataset.data.shape[1]
 
     model = LinearModel(data_dim).to(device)
-    optim = torch.optim.SGD(model.parameters(), lr=lr)
+    # optim = torch.optim.SGD(model.parameters(), lr=lr)
+    optim = torch.optim.Adam(model.parameters(), lr=lr)
     sched = torch.optim.lr_scheduler.StepLR(optim, step_size, gamma)
 
     print('training')

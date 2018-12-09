@@ -1,5 +1,5 @@
 
-from experiments.classification import train_and_score
+from experiments.regression import train_and_score
 import numpy as np
 
 from reducers.auto_encoder import AutoEncoder
@@ -13,27 +13,29 @@ datasets_prefix = '/raid/bevans97/datasets/cse599i'
 data_dir = '/data.npy'
 labels_dir = '/labels.npy'
 
-# multimodal_gaussian_suffix = datasets_prefix+'/multimodal_gaussian_20000_15000_2'
-multimodal_gaussian_suffix = datasets_prefix+'/ham10000'
+multimodal_gaussian_suffix = datasets_prefix+'/sparse_100000_20000'
 
 def load_multimodal():
-    data = np.load(multimodal_gaussian_suffix + data_dir).astype(np.float32)
-    labels = np.load(multimodal_gaussian_suffix + labels_dir).astype(np.float32)
+    data = np.load(multimodal_gaussian_suffix + data_dir)
+    labels = np.load(multimodal_gaussian_suffix + labels_dir)
     return data, labels
 
-# d_primes = [10, 50, 100, 250, 500, 1000]
-d_primes = [500]
-d = 2352
+# d_primes = [10, 50, 100, 250, 500, 1000, 2000, 4000]
+d_primes = [8000]
+d = 20000
 
 multimodal_data, multimodal_labels = load_multimodal()
-# multimodal_labels = np.argwhere(multimodal_labels==1)[:,1]
 
 def experiment(red_generator):
     exp_results = []
     print('multimodal_data', multimodal_data.shape)
     print('multmodal_lables', multimodal_labels.shape)
-    score = train_and_score(multimodal_data, multimodal_labels)
+    print('calculating best score')
+    # score = train_and_score(multimodal_data, multimodal_labels)
+    score = 0.9983268730907576
+    print('score', score)
     for d_prime in d_primes:
+        print('starting exp for d_prime:', d_prime)
         red = red_generator(d, d_prime)
         red.construct(multimodal_data)
         red_data = red.reduce_dim(multimodal_data)
@@ -69,29 +71,15 @@ def pca_exp():
         return red
     return experiment(red_generator)
 
-def auto_encoder_exp():
-    def red_generator(d, d_prime):
-        dim1 = max(d//2, d_prime)
-        dim2 = max(dim1//2, d_prime)
-        sizes = [(d, dim1), (dim1, dim2), (dim2, d_prime)]
-        print('sizes', sizes)
-        non_linearity = torch.nn.Tanh
-        mu = 0.0
-        tau = 1.0
-        self_norm_preservation = 0.0
-        red = AutoEncoderNormRegularized(d, d_prime, sizes, non_linearity, mu, tau, self_norm_preservation,
-            iterations=100000, batch_size=64, lr=1e-3, device=torch.device('cuda'), step_size=2500, gamma=0.8)
-        return red
-    return experiment(red_generator)
 
 import pickle
-save_prefix = '/raid/bevans97/datasets/cse599i/data/classif_ham/'
+save_prefix = '/raid/bevans97/datasets/cse599i/data/reg/'
 
 if __name__ == '__main__':
     print('loading all data')
     print('starting experiments')
-    print('jl exp')
 
+    # print('jl exp')
     # jl_exp_data = jl_exp()
     # print(jl_exp_data)
     # with open(save_prefix + 'jl_exp_data.p', 'wb') as f:
@@ -109,9 +97,8 @@ if __name__ == '__main__':
     # with open(save_prefix + 'pca_data.p', 'wb') as f:
     #     pickle.dump(pca_data, f)
 
-    print('autoencoder exp')
-    autoencoder_data = auto_encoder_exp()
-    print(autoencoder_data)
-    with open(save_prefix + 'autoencoder_exp_data.p', 'wb') as f:
-        pickle.dump(autoencoder_data, f)
-
+    print('pca exp')
+    pca_data = pca_exp()
+    print(pca_data)
+    with open(save_prefix + 'pca_data_8000.p', 'wb') as f:
+        pickle.dump(pca_data, f)

@@ -12,7 +12,7 @@ class Identity(nn.Module):
 class AutoEncoderNormRegularized(DimensionReducer):
 
     def __init__(self, d, d_prime, sizes,
-        non_linearity, mu, tau, device=torch.device('cpu'), 
+        non_linearity, mu, tau, self_norm, device=torch.device('cpu'), 
         batch_size=32, lr=1e-4, gamma=1.0,
         step_size=1000, iterations=5000,
         momentum=0.9, optimizer='adam'):
@@ -20,6 +20,7 @@ class AutoEncoderNormRegularized(DimensionReducer):
 
         self.mu = mu
         self.tau = tau
+        self.self_norm = self_norm
         self.device = device
         self.batch_size = batch_size
         self.lr = lr
@@ -46,9 +47,9 @@ class AutoEncoderNormRegularized(DimensionReducer):
         print(encoder_modules)
         print(decoder_modules)
         
-        self.encoder = nn.Sequential(*encoder_modules)
-        self.decoder = nn.Sequential(*decoder_modules)
-        self.model = nn.Sequential(self.encoder, self.decoder)
+        self.encoder = nn.Sequential(*encoder_modules).to(self.device)
+        self.decoder = nn.Sequential(*decoder_modules).to(self.device)
+        self.model = nn.Sequential(self.encoder, self.decoder).to(self.device)
 
         if optimizer == 'adam':
             self.optim = torch.optim.Adam(self.model.parameters(), lr=lr)
@@ -62,6 +63,9 @@ class AutoEncoderNormRegularized(DimensionReducer):
     def norm(self, x, dim=1):
         return torch.sum(x**2, dim=dim)
 
+    def encode(self, x):
+        code = self.encoder(x) * np.sqrt(self.d / self.d_prime)
+        return code
     def construct(self, data, print_interval=500, return_info=True):
         self.model.train()
         assert data.shape[1] == self.d
@@ -72,19 +76,26 @@ class AutoEncoderNormRegularized(DimensionReducer):
             batch_idx = np.random.choice(n, self.batch_size, replace=False)
             batch = torch.from_numpy(data[batch_idx]).to(self.device)
 
-            code = self.encoder(batch)
+            code = self.encode(batch)
             predicted = self.decoder(code)
 
             reconstruction_loss = F.mse_loss(predicted, batch)
-            norm_loss = self.norm(self.norm(code) - self.norm(batch), dim=0)
+            pairwise_idx_1 = np.random.choice(self.batch_size, self.batch_size // 2)
+            pairwise_idx_2 = np.random.choice(self.batch_size, self.batch_size // 2)
+            true_dists = self.norm(batch[pairwise_idx_1] - batch[pairwise_idx_2])
+            pred_dists = self.norm(code[pairwise_idx_1] - code[pairwise_idx_2])
+            
+            norm_loss = self.norm(true_dists - pred_dists, dim=0) / (self.batch_size / 2)
 
-            loss = self.tau * reconstruction_loss + self.mu * norm_loss
+            self_norm_loss = self.norm(self.norm(code) - self.norm(batch), dim=0) / (self.batch_size)
+
+            loss = self.tau * reconstruction_loss + self.mu * norm_loss + self.self_norm * self_norm_loss
             loss.backward()
 
             self.optim.step()
 
             if print_interval is not None and i % print_interval == 0:
-                print('i', i, 'loss', loss.item(), 'norm_loss', norm_loss.item(), 'rec_loss', reconstruction_loss.item(), 'lr', self.sched.get_lr()[0])
+                print('i', i, 'loss', loss.item(), 'norm_loss', norm_loss.item(), 'self_norm_loss', self_norm_loss.item(), 'rec_loss', reconstruction_loss.item(), 'lr', self.sched.get_lr()[0])
 
         self.model.eval()
 
@@ -101,7 +112,7 @@ class AutoEncoderNormRegularized(DimensionReducer):
         print('avg_error', total_error / n)
 
     def reduce_dim(self, data):
-        return self.encoder(torch.from_numpy(data)).cpu().detach().numpy()
+        return self.encode(torch.from_numpy(data).to(self.device)).cpu().detach().numpy()
 
 
 from experiments.pairwise_distance import *

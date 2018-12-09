@@ -55,27 +55,27 @@ def load_data():
 datasets_meta = {
         'datasets':
         [
-            # {
-            #     'dataset_name': 'gaussian_features',
-            #     'd': 10000,
-            #     'd_primes': [8000, 4000, 2000, 1000, 500, 250, 100, 50, 10][::-1],
-            #     # 'd_primes': [8000]
-            # },
-            # {
-            #     'dataset_name': 'multimodal_features',
-            #     'd': 15000,
-            #     'd_primes': [10000, 8000, 4000, 2000, 500, 250, 100, 50, 10][::-1]
-            # },
+            {
+                'dataset_name': 'gaussian_features',
+                'd': 10000,
+                'd_primes': [8000, 4000, 2000, 1000, 500, 250, 100, 50, 10][::-1],
+                # 'd_primes': [8000]
+            },
+            {
+                'dataset_name': 'multimodal_features',
+                'd': 15000,
+                'd_primes': [10000, 8000, 4000, 2000, 500, 250, 100, 50, 10][::-1]
+            },
             {
                 'dataset_name': 'sparse_features',
                 'd': 20000,
                 'd_primes': [10, 50, 100, 250, 500, 1000, 2000, 4000, 8000, 16000]
             },
-            # {
-            #     'dataset_name': 'ham_features',
-            #     'd': 2352,
-            #     'd_primes': [2000, 1500, 1000, 500, 250, 100, 50, 10][::-1]
-            # }
+            {
+                'dataset_name': 'ham_features',
+                'd': 2352,
+                'd_primes': [10, 50, 100, 250, 500, 1000, 2000]
+            }
         ]
     }
 
@@ -136,11 +136,16 @@ def pca_exp():
 
 def auto_encoder_exp():
     def red_generator(d, d_prime):
-        next_dim = max(d_prime, 2000)
-        sizes = [(d, next_dim), (next_dim, next_dim), (next_dim, d_prime)]
+        dim1 = max(d//2, d_prime)
+        dim2 = max(dim1//2, d_prime)
+        sizes = [(d, dim1), (dim1, dim2), (dim2, d_prime)]
+        print('sizes', sizes)
         non_linearity = torch.nn.Tanh
-        red = AutoEncoder(d, d_prime, sizes, non_linearity,
-            iterations=10000, batch_size=64, lr=1e-3, device=torch.device('cuda'), step_size=2500, gamma=0.75)
+        mu = 1.0
+        tau = 0.0
+        self_norm_preservation = 0.1
+        red = AutoEncoderNormRegularized(d, d_prime, sizes, non_linearity, mu, tau, self_norm_preservation,
+            iterations=100000, batch_size=64, lr=1e-3, device=torch.device('cuda'), step_size=2500, gamma=0.8)
         return red
     return experiment(red_generator)
 
@@ -155,25 +160,25 @@ if __name__ == '__main__':
     # print('jl exp')
     # jl_exp_data = jl_exp()
     # print(jl_exp_data)
-    # with open(save_prefix + 'jl_exp_data.p', 'wb') as f:
+    # with open(save_prefix + 'jl_exp_data_sparse.p', 'wb') as f:
     #     pickle.dump(jl_exp_data, f)
 
-    print('fast jl exp')
-    fast_jl_exp_data = fast_jl_exp()
-    print(fast_jl_exp_data)
-    with open(save_prefix + 'fast_jl_sparse.p', 'wb') as f:
-        pickle.dump(fast_jl_exp_data, f)
+    # print('fast jl exp')
+    # fast_jl_exp_data = fast_jl_exp()
+    # print(fast_jl_exp_data)
+    # with open(save_prefix + 'fast_jl_sparse.p', 'wb') as f:
+    #     pickle.dump(fast_jl_exp_data, f)
 
     # print('pca exp')
     # pca_data = pca_exp()
     # print(pca_data)
-    # with open(save_prefix + 'pca_data.p', 'wb') as f:
+    # with open(save_prefix + 'pca_data_sparse.p', 'wb') as f:
     #     pickle.dump(pca_data, f)
 
-    # print('autoencoder exp')
-    # auto_encoder_exp_data = auto_encoder_exp()
-    # print(auto_encoder_exp_data)
-    # with open(save_prefix + 'auto_encoder_exp_data.p', 'wb') as f:
-    #     pickle.dump(auto_encoder_exp_data, f)
+    print('autoencoder exp')
+    auto_encoder_exp_data = auto_encoder_exp()
+    print(auto_encoder_exp_data)
+    with open(save_prefix + 'auto_encoder_exp_data.p', 'wb') as f:
+        pickle.dump(auto_encoder_exp_data, f)
     
 
